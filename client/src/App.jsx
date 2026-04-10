@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import WeatherPanel from './components/WeatherPanel/WeatherPanel'
+import ChartsPanel from './components/WeatherPanel/ChartsPanel'
 import MapPanel from './components/MapPanel/MapPanel'
 import SettingsModal from './components/Settings/SettingsModal'
 import LocationSwitcher from './components/LocationSwitcher/LocationSwitcher'
@@ -12,8 +13,9 @@ export default function App() {
   const { settings, updateSettings } = useApp()
   const [showSettings, setShowSettings] = useState(false)
 
-  const theme  = settings?.theme  || 'dark'
-  const layout = settings?.layout || 'map-left'
+  const theme      = settings?.theme      || 'dark'
+  const layout     = settings?.layout     || 'map-left'
+  const tabletMode = settings?.tabletMode || false
 
   // Apply theme to document root
   useEffect(() => {
@@ -46,9 +48,9 @@ export default function App() {
   }
 
   return (
-    <div data-theme={theme} className={`app layout-${layout}`}>
-      {/* Top bar */}
-      <header className="app-header">
+    <div data-theme={theme} className={`app layout-${layout}${tabletMode ? ' tablet-mode' : ''}`}>
+      {/* Floating controls — zero layout footprint */}
+      <div className="app-controls">
         <LocationSwitcher />
         <div className="header-actions">
           <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
@@ -58,7 +60,7 @@ export default function App() {
             ⚙️
           </button>
         </div>
-      </header>
+      </div>
 
       {/* Main content — layout controlled via CSS class */}
       <main className="app-main">
@@ -66,8 +68,13 @@ export default function App() {
           <MapPanel />
         </div>
         <div className="weather-slot">
-          <WeatherPanel />
+          <WeatherPanel hideCharts={tabletMode} />
         </div>
+        {tabletMode && (
+          <div className="charts-slot">
+            <ChartsPanel />
+          </div>
+        )}
       </main>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}

@@ -1,8 +1,9 @@
-/* Shared main grid */
+/* Shared main grid — fills full viewport, controls float over */
 .app-main {
   flex: 1;
   overflow: hidden;
   display: grid;
+  height: 100%;
 }
 
 /* ── map-left (default): map fills remaining | weather fixed 360px ── */
@@ -20,6 +21,27 @@
 }
 .layout-weather-left .weather-slot { grid-column: 1; grid-row: 1; }
 .layout-weather-left .map-slot     { grid-column: 2; grid-row: 1; }
+
+/* ── tablet-mode override: map | conditions | charts ── */
+.tablet-mode.layout-map-left .app-main,
+.tablet-mode.layout-weather-left .app-main {
+  grid-template-columns: 1fr 220px 220px;
+  grid-template-rows: 1fr;
+  gap: 0;
+}
+.tablet-mode.layout-map-left .map-slot      { grid-column: 1; grid-row: 1; }
+.tablet-mode.layout-map-left .weather-slot  { grid-column: 2; grid-row: 1; }
+.tablet-mode.layout-map-left .charts-slot   { grid-column: 3; grid-row: 1; }
+
+.tablet-mode.layout-weather-left .weather-slot { grid-column: 1; grid-row: 1; }
+.tablet-mode.layout-weather-left .charts-slot  { grid-column: 2; grid-row: 1; }
+.tablet-mode.layout-weather-left .map-slot     { grid-column: 3; grid-row: 1; }
+
+.charts-slot {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
 
 /* ── map-top: map 55% top | weather 45% bottom ── */
 .layout-map-top .app-main {

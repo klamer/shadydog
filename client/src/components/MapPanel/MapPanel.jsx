@@ -9,15 +9,15 @@ const CARTO          = '© <a href="https://www.openstreetmap.org/copyright">Ope
 const MAPBOX_ATTR    = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 
 const BASE_STYLES = {
-  osm:            { label: 'Standard', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                    subdomains: 'abc',  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' },
-  'carto-dark':   { label: 'Dark',     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',            subdomains: 'abcd', attribution: CARTO },
-  'carto-light':  { label: 'Light',    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',           subdomains: 'abcd', attribution: CARTO },
-  'carto-voyager':{ label: 'Voyager',  url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', subdomains: 'abcd', attribution: CARTO },
+  osm:            { label: 'Std',     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                       subdomains: 'abc',  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' },
+  'carto-dark':   { label: 'Dark',    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',            subdomains: 'abcd', attribution: CARTO },
+  'carto-light':  { label: 'Light',   url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',           subdomains: 'abcd', attribution: CARTO },
+  'carto-voyager':{ label: 'Voyager', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', subdomains: 'abcd', attribution: CARTO },
 }
 
 function mapboxStyle(key) {
   return {
-    label: 'Mapbox Dark',
+    label: 'Mapbox',
     url: `https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}?access_token=${key}`,
     subdomains: 'abc',
     attribution: MAPBOX_ATTR
@@ -64,9 +64,10 @@ export default function MapPanel() {
     mapRef.current = map
 
     baseTileRef.current = L.tileLayer(style.url, {
-      attribution: style.attribution,
-      subdomains:  style.subdomains,
-      maxZoom: 19
+      attribution:   style.attribution,
+      subdomains:    style.subdomains,
+      maxZoom:       19,
+      detectRetina:  true,
     }).addTo(map)
 
     // Fix mobile tile seams — debounced invalidateSize on container resize

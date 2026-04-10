@@ -34,8 +34,12 @@ const TOOLTIP_STYLE = {
   }
 }
 
-export default function Graphs() {
+export default function Graphs({ fillHeight = false }) {
   const { weather, settings } = useApp()
+  const chartH   = fillHeight ? '100%' : 160
+  const smallH   = fillHeight ? '100%' : 100
+  const axisW    = fillHeight ? 32 : 45
+  const marginR  = fillHeight ? 4 : 40
   const tempLabel   = settings?.units === 'imperial' ? 'F' : 'C'
   const precipLabel = settings?.units === 'imperial' ? 'in' : 'mm'
   const gridColor   = 'var(--border)'
@@ -89,75 +93,81 @@ export default function Graphs() {
       {twoHourData.length > 0 && (
         <div className="graph-section">
           <div className="graph-title">Next 2 Hours — Precipitation</div>
-          <ResponsiveContainer width="100%" height={100}>
-            <BarChart data={twoHourData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-              <XAxis dataKey="time" tick={{ fill: textColor, fontSize: 11 }} />
-              <YAxis tick={{ fill: textColor, fontSize: 11 }} unit={precipLabel} />
-              <Tooltip active={false} />
-              <Bar dataKey="precip" radius={[3, 3, 0, 0]}>
-                {twoHourData.map((d, i) => (
-                  <Cell key={i} fill={d.precip > trace ? 'var(--rain)' : 'var(--border)'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="chart-fill">
+            <ResponsiveContainer width="100%" height={smallH}>
+              <BarChart data={twoHourData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                <XAxis dataKey="time" tick={{ fill: textColor, fontSize: 11 }} />
+                <YAxis tick={{ fill: textColor, fontSize: 11 }} unit={precipLabel} />
+                <Tooltip active={false} />
+                <Bar dataKey="precip" radius={[3, 3, 0, 0]}>
+                  {twoHourData.map((d, i) => (
+                    <Cell key={i} fill={d.precip > trace ? 'var(--rain)' : 'var(--border)'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
 
       {/* 24hr */}
       <div className="graph-section">
         <div className="graph-title">24 Hour Temp / Precipitation</div>
-        <ResponsiveContainer width="100%" height={160}>
-          <ComposedChart data={hourlyData} margin={{ top: 4, right: 40, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-            <XAxis dataKey="time" {...axisProps} interval={3} />
-            <YAxis yAxisId="temp" {...axisProps} unit={tempLabel} />
-            <YAxis yAxisId="precip" orientation="right" {...axisProps} unit="%" domain={[0, 100]} />
-            <Tooltip {...TOOLTIP_STYLE} />
-            <Legend wrapperStyle={{ color: textColor, fontSize: 11 }} />
-            <Line
-              yAxisId="temp" type="monotone" dataKey="temp"
-              name={`Temp (°${tempLabel})`} stroke="var(--text)"
-              strokeWidth={2} dot={false}
-            />
-            <Line
-              yAxisId="precip" type="monotone" dataKey="precip"
-              name="Precip %" stroke="var(--rain)"
-              strokeWidth={2} dot={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <div className="chart-fill">
+          <ResponsiveContainer width="100%" height={chartH}>
+            <ComposedChart data={hourlyData} margin={{ top: 4, right: marginR, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+              <XAxis dataKey="time" {...axisProps} interval={3} />
+              <YAxis yAxisId="temp" {...axisProps} unit={tempLabel} width={axisW} />
+              <YAxis yAxisId="precip" orientation="right" {...axisProps} unit="%" domain={[0, 100]} width={axisW} />
+              <Tooltip {...TOOLTIP_STYLE} />
+              <Legend wrapperStyle={{ color: textColor, fontSize: 11 }} />
+              <Line
+                yAxisId="temp" type="monotone" dataKey="temp"
+                name={`Temp (°${tempLabel})`} stroke="var(--text)"
+                strokeWidth={2} dot={false}
+              />
+              <Line
+                yAxisId="precip" type="monotone" dataKey="precip"
+                name="Precip %" stroke="var(--rain)"
+                strokeWidth={2} dot={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* 5-day */}
       <div className="graph-section">
         <div className="graph-title">5 Day Temp / Precipitation</div>
-        <ResponsiveContainer width="100%" height={160}>
-          <ComposedChart data={dailyData.slice(0, 5)} margin={{ top: 4, right: 40, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-            <XAxis dataKey="day" {...axisProps} />
-            <YAxis yAxisId="temp" {...axisProps} unit={tempLabel} />
-            <YAxis yAxisId="precip" orientation="right" {...axisProps} unit="%" domain={[0, 100]} />
-            <Tooltip {...TOOLTIP_STYLE} />
-            <Legend wrapperStyle={{ color: textColor, fontSize: 11 }} />
-            <Line
-              yAxisId="temp" type="monotone" dataKey="high"
-              name={`High (°${tempLabel})`} stroke="var(--text)"
-              strokeWidth={2} dot={true}
-            />
-            <Line
-              yAxisId="temp" type="monotone" dataKey="low"
-              name={`Low (°${tempLabel})`} stroke="var(--text-muted)"
-              strokeWidth={2} dot={true} strokeDasharray="4 2"
-            />
-            <Line
-              yAxisId="precip" type="monotone" dataKey="precip"
-              name="Precip %" stroke="var(--rain)"
-              strokeWidth={2} dot={true}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <div className="chart-fill">
+          <ResponsiveContainer width="100%" height={chartH}>
+            <ComposedChart data={dailyData.slice(0, 5)} margin={{ top: 4, right: marginR, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+              <XAxis dataKey="day" {...axisProps} />
+              <YAxis yAxisId="temp" {...axisProps} unit={tempLabel} width={axisW} />
+              <YAxis yAxisId="precip" orientation="right" {...axisProps} unit="%" domain={[0, 100]} width={axisW} />
+              <Tooltip {...TOOLTIP_STYLE} />
+              <Legend wrapperStyle={{ color: textColor, fontSize: 11 }} />
+              <Line
+                yAxisId="temp" type="monotone" dataKey="high"
+                name={`High (°${tempLabel})`} stroke="var(--text)"
+                strokeWidth={2} dot={true}
+              />
+              <Line
+                yAxisId="temp" type="monotone" dataKey="low"
+                name={`Low (°${tempLabel})`} stroke="var(--text-muted)"
+                strokeWidth={2} dot={true} strokeDasharray="4 2"
+              />
+              <Line
+                yAxisId="precip" type="monotone" dataKey="precip"
+                name="Precip %" stroke="var(--rain)"
+                strokeWidth={2} dot={true}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   )

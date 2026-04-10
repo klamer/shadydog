@@ -4,13 +4,13 @@ import AlertsBanner from './AlertsBanner'
 import HyperLocal from './HyperLocal'
 import Graphs from './Graphs'
 
-export default function WeatherPanel() {
+export default function WeatherPanel({ hideCharts }) {
   return (
     <div className="weather-panel">
       <AlertsBanner />
       <CurrentConditions />
       <HyperLocal />
-      <Graphs />
+      {!hideCharts && <Graphs />}
     </div>
   )
 }

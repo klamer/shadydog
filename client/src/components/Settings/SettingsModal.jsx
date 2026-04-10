@@ -13,11 +13,12 @@ const LAYOUTS = [
 export default function SettingsModal({ onClose }) {
   const { settings, updateSettings } = useApp()
 
-  const [theme,     setTheme]     = useState(settings?.theme     || 'dark')
-  const [layout,    setLayout]    = useState(settings?.layout    || 'map-left')
-  const [units,     setUnits]     = useState(settings?.units     || 'imperial')
-  const [port,      setPort]      = useState(settings?.port      || 8080)
-  const [mapboxKey, setMapboxKey] = useState(settings?.mapboxKey || '')
+  const [theme,      setTheme]      = useState(settings?.theme      || 'dark')
+  const [layout,     setLayout]     = useState(settings?.layout     || 'map-left')
+  const [units,      setUnits]      = useState(settings?.units      || 'imperial')
+  const [tabletMode, setTabletMode] = useState(settings?.tabletMode || false)
+  const [port,       setPort]       = useState(settings?.port       || 8080)
+  const [mapboxKey,  setMapboxKey]  = useState(settings?.mapboxKey  || '')
   const [locations, setLocations] = useState(settings?.locations || [])
 
   const [newLat,    setNewLat]    = useState('')
@@ -55,6 +56,7 @@ export default function SettingsModal({ onClose }) {
       theme,
       layout,
       units,
+      tabletMode,
       port: parseInt(port, 10) || 8080,
       mapboxKey: mapboxKey.trim(),
       locations,
@@ -97,6 +99,16 @@ export default function SettingsModal({ onClose }) {
                 <option value="metric">Metric (°C, km/h)</option>
               </select>
             </label>
+            <label>
+              Tablet mode
+              <input
+                type="checkbox"
+                checked={tabletMode}
+                onChange={e => setTabletMode(e.target.checked)}
+                style={{ width: 'auto', minWidth: 'unset' }}
+              />
+            </label>
+            <p className="settings-note">Splits conditions and charts into two narrow panels. Best for landscape tablets.</p>
           </section>
 
           {/* API Keys */}
