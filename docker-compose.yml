@@ -1,0 +1,11 @@
+services:
+  shadydog:
+    build: .
+    ports:
+      - "${PORT:-8080}:8080"
+    volumes:
+      - ./settings.json:/app/settings.json
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-8080}
+    restart: unless-stopped

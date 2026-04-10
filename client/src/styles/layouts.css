@@ -1,0 +1,112 @@
+/* Shared main grid */
+.app-main {
+  flex: 1;
+  overflow: hidden;
+  display: grid;
+}
+
+/* ── map-left (default): map fills remaining | weather fixed 360px ── */
+.layout-map-left .app-main {
+  grid-template-columns: 1fr 360px;
+  grid-template-rows: 1fr;
+}
+.layout-map-left .map-slot     { grid-column: 1; grid-row: 1; }
+.layout-map-left .weather-slot { grid-column: 2; grid-row: 1; }
+
+/* ── weather-left: weather fixed 360px | map fills remaining ── */
+.layout-weather-left .app-main {
+  grid-template-columns: 360px 1fr;
+  grid-template-rows: 1fr;
+}
+.layout-weather-left .weather-slot { grid-column: 1; grid-row: 1; }
+.layout-weather-left .map-slot     { grid-column: 2; grid-row: 1; }
+
+/* ── map-top: map 55% top | weather 45% bottom ── */
+.layout-map-top .app-main {
+  grid-template-columns: 1fr;
+  grid-template-rows: 55fr 45fr;
+}
+.layout-map-top .map-slot     { grid-column: 1; grid-row: 1; }
+.layout-map-top .weather-slot { grid-column: 1; grid-row: 2; }
+
+/* ── map-overlay: full-screen map, weather floats over ── */
+.layout-map-overlay .app-main {
+  position: relative;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.layout-map-overlay .map-slot {
+  grid-column: 1; grid-row: 1;
+  z-index: 1;
+}
+.layout-map-overlay .weather-slot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 340px;
+  height: 100%;
+  z-index: 50;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+/* Ensure map fills its slot */
+.map-slot {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.weather-slot {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Mobile: force stacked layout on small screens ── */
+@media (max-width: 768px) {
+  html, body, #root { overflow: auto; height: auto; }
+
+  .app { height: auto; min-height: 100vh; }
+
+  .app-main {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .map-slot {
+    order: 1;
+    height: 45vh;
+    min-height: 280px;
+    overflow: hidden;
+  }
+
+  .weather-slot {
+    order: 2;
+    width: 100% !important;
+    height: auto !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  .weather-panel {
+    height: auto;
+    overflow: visible;
+  }
+
+  .radar-controls {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .clock-time { font-size: 32px; }
+  .temp-value { font-size: 40px; }
+  .weather-icon { font-size: 36px; }
+
+  .add-location-inputs {
+    grid-template-columns: 1fr 1fr;
+  }
+}

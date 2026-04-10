@@ -1,0 +1,16 @@
+{
+  "port": 8080,
+  "theme": "dark",
+  "layout": "map-left",
+  "units": "imperial",
+  "locations": [
+    {
+      "id": "example-uuid-1",
+      "name": "Home",
+      "label": "Austin, TX",
+      "lat": 30.2672,
+      "lon": -97.7431
+    }
+  ],
+  "activeLocationId": "example-uuid-1"
+}
