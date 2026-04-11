@@ -37,11 +37,9 @@ export async function fetchWeather(lat, lon, units = 'imperial') {
     temperature_unit: tempUnit,
     wind_speed_unit: windUnit,
     precipitation_unit: precipUnit,
-    minutely_15: 'precipitation,weather_code',
     timezone: 'auto',
     forecast_days: 6,
-    forecast_hours: 24,
-    forecast_minutely_days: 1
+    forecast_hours: 24
   })
 
   const res = await fetch(`${BASE}?${params}`)

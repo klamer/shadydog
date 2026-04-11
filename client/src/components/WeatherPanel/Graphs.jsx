@@ -34,17 +34,27 @@ const TOOLTIP_STYLE = {
   }
 }
 
+const PRECIP_LABELS = ['Clear', 'Light', 'Moderate', 'Heavy']
+const PRECIP_COLORS = ['var(--border)', '#60a5fa', '#3b82f6', '#1d4ed8']
+
+function fmtMs(ms) {
+  const d = new Date(ms)
+  const h = d.getHours()
+  const m = d.getMinutes()
+  const label  = h === 0 ? '12' : h <= 12 ? `${h}` : `${h - 12}`
+  const suffix = h < 12 ? 'a' : 'p'
+  return m === 0 ? `${label}${suffix}` : `${label}:${String(m).padStart(2, '0')}`
+}
+
 export default function Graphs({ fillHeight = false }) {
-  const { weather, settings } = useApp()
+  const { weather, settings, rainviewer } = useApp()
   const chartH   = fillHeight ? '100%' : 160
   const smallH   = fillHeight ? '100%' : 100
   const axisW    = fillHeight ? 32 : 45
   const marginR  = fillHeight ? 4 : 40
-  const tempLabel   = settings?.units === 'imperial' ? 'F' : 'C'
-  const precipLabel = settings?.units === 'imperial' ? 'in' : 'mm'
-  const gridColor   = 'var(--border)'
-  const textColor   = 'var(--text-muted)'
-  const trace       = settings?.units === 'imperial' ? 0.005 : 0.1
+  const tempLabel = settings?.units === 'imperial' ? 'F' : 'C'
+  const gridColor = 'var(--border)'
+  const textColor = 'var(--text-muted)'
 
   const hourlyData = React.useMemo(() => {
     const h = weather?.hourly
@@ -57,14 +67,42 @@ export default function Graphs({ fillHeight = false }) {
   }, [weather?.hourly])
 
   const twoHourData = React.useMemo(() => {
-    const m = weather?.minutely_15
-    if (!m) return []
     const now = Date.now()
-    return m.time
-      .map((t, i) => ({ time: fmt15(t), precip: m.precipitation[i], ts: new Date(t).getTime() }))
-      .filter(d => d.ts >= now - 15 * 60 * 1000)  // from current interval
-      .slice(0, 9)                                  // 2 hrs + current = 9 bars
-  }, [weather?.minutely_15])
+
+    // Primary: RainViewer radar point data
+    if (rainviewer?.length) {
+      return [...rainviewer]
+        .sort((a, b) => a.time - b.time)
+        .filter(f => f.time >= now - 10 * 60 * 1000)  // include current frame
+        .map(f => ({
+          time:  fmtMs(f.time),
+          level: f.intensity,
+          label: PRECIP_LABELS[f.intensity],
+          color: PRECIP_COLORS[f.intensity],
+          ts:    f.time
+        }))
+    }
+
+    // Fallback: hourly precipitation_probability
+    const h = weather?.hourly
+    if (!h) return []
+
+    function probToLevel(p) {
+      if (p >= 75) return 3
+      if (p >= 55) return 2
+      if (p >= 30) return 1
+      return 0
+    }
+
+    return h.time
+      .map((t, i) => ({ ts: new Date(t).getTime(), prob: h.precipitation_probability[i] }))
+      .filter(d => d.ts >= now && d.ts <= now + 3 * 60 * 60 * 1000)
+      .slice(0, 4)
+      .map(d => {
+        const level = probToLevel(d.prob)
+        return { time: fmt12(new Date(d.ts).toISOString()), level, label: PRECIP_LABELS[level], color: PRECIP_COLORS[level], ts: d.ts }
+      })
+  }, [rainviewer, weather?.hourly])
 
   const dailyData = React.useMemo(() => {
     const d = weather?.daily
@@ -95,14 +133,23 @@ export default function Graphs({ fillHeight = false }) {
           <div className="graph-title">Next 2 Hours — Precipitation</div>
           <div className="chart-fill">
             <ResponsiveContainer width="100%" height={smallH}>
-              <BarChart data={twoHourData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <BarChart data={twoHourData} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                 <XAxis dataKey="time" tick={{ fill: textColor, fontSize: 11 }} />
-                <YAxis tick={{ fill: textColor, fontSize: 11 }} unit={precipLabel} />
-                <Tooltip active={false} />
-                <Bar dataKey="precip" radius={[3, 3, 0, 0]}>
+                <YAxis
+                  domain={[0, 3]}
+                  ticks={[0, 1, 2, 3]}
+                  tickFormatter={v => ['', 'Light', 'Mod', 'Heavy'][v] || ''}
+                  tick={{ fill: textColor, fontSize: 9 }}
+                  width={38}
+                />
+                <Tooltip
+                  formatter={(_, __, props) => [props.payload.label, 'Intensity']}
+                  contentStyle={TOOLTIP_STYLE.contentStyle}
+                />
+                <Bar dataKey="level" radius={[3, 3, 0, 0]} maxBarSize={24}>
                   {twoHourData.map((d, i) => (
-                    <Cell key={i} fill={d.precip > trace ? 'var(--rain)' : 'var(--border)'} />
+                    <Cell key={i} fill={d.color} />
                   ))}
                 </Bar>
               </BarChart>
