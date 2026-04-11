@@ -1,4 +1,4 @@
-<img width="1427" height="1111" alt="SDweather" src="https://github.com/user-attachments/assets/94464677-efda-48dd-9850-48ed4dd51d4a" />
+
 # Shadydog Weather Station
 
 A Raspberry Pi (and general-purpose) weather display app. React + Vite frontend, Express backend. No paid APIs — all data is free and keyless.
