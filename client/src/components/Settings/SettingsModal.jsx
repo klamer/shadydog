@@ -20,7 +20,8 @@ export default function SettingsModal({ onClose }) {
   const [spcOpacity,   setSpcOpacity]   = useState(localStorage.getItem('spcOpacity') || 'med')
   const [port,       setPort]       = useState(settings?.port       || 8080)
   const [mapboxKey,      setMapboxKey]      = useState(settings?.mapboxKey      || '')
-  const [tomorrowioKey, setTomorrowioKey] = useState(settings?.tomorrowioKey || '')
+  const [tomorrowioKey,    setTomorrowioKey]    = useState(settings?.tomorrowioKey    || '')
+  const [pirateWeatherKey, setPirateWeatherKey] = useState(settings?.pirateWeatherKey || '')
   const [locations, setLocations] = useState(settings?.locations || [])
 
   const [newLat,    setNewLat]    = useState('')
@@ -62,7 +63,8 @@ export default function SettingsModal({ onClose }) {
       units,
       port: parseInt(port, 10) || 8080,
       mapboxKey:      mapboxKey.trim(),
-      tomorrowioKey: tomorrowioKey.trim(),
+      tomorrowioKey:    tomorrowioKey.trim(),
+      pirateWeatherKey: pirateWeatherKey.trim(),
       locations,
       activeLocationId: activeStillExists ? currentActiveId : (locations[0]?.id || null)
     }
@@ -153,7 +155,17 @@ export default function SettingsModal({ onClose }) {
                 onChange={e => setTomorrowioKey(e.target.value)}
               />
             </label>
-            <p className="settings-note">Required for hyperlocal minutely precipitation. Get a free key at tomorrow.io.</p>
+            <p className="settings-note">Optional. Hyperlocal minutely precipitation. Get a free key at tomorrow.io.</p>
+            <label>
+              Pirate Weather
+              <input
+                type="password"
+                placeholder="API key"
+                value={pirateWeatherKey}
+                onChange={e => setPirateWeatherKey(e.target.value)}
+              />
+            </label>
+            <p className="settings-note">Preferred. Hyperlocal minutely precipitation, 10K calls/month free. Get a key at pirateweather.net.</p>
           </section>
 
           {/* Server */}

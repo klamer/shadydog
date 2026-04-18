@@ -7,35 +7,48 @@ function intensityLevel(mmPerHr) {
   return 3                       // heavy
 }
 
+async function fetchPirateWeather(key, lat, lon) {
+  const url = `https://api.pirateweather.net/forecast/${key}/${lat},${lon}` +
+    `?exclude=currently,hourly,daily,alerts&units=si`
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`PirateWeather ${response.status}`)
+  const data = await response.json()
+  return (data?.minutely?.data || []).map(m => ({
+    time:      m.time * 1000,
+    intensity: intensityLevel(m.precipIntensity ?? 0)
+  }))
+}
+
+async function fetchTomorrowio(key, lat, lon) {
+  const url = `https://api.tomorrow.io/v4/weather/forecast` +
+    `?location=${lat},${lon}&timesteps=1m&fields=precipitationIntensity&units=metric&apikey=${key}`
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`Tomorrow.io ${response.status}`)
+  const data = await response.json()
+  return (data?.timelines?.minutely || []).map(m => ({
+    time:      new Date(m.time).getTime(),
+    intensity: intensityLevel(m.values?.precipitationIntensity ?? 0)
+  }))
+}
+
 async function precip(req, res) {
   const { lat, lon } = req.query
   if (!lat || !lon) return res.status(400).json({ error: 'lat and lon required' })
 
   const settings = settingsCtrl.load()
-  const key = settings.tomorrowioKey
-  if (!key) return res.status(503).json({ error: 'No Tomorrow.io key configured' })
+  const pirateKey    = settings.pirateWeatherKey
+  const tomorrowKey  = settings.tomorrowioKey
+
+  if (!pirateKey && !tomorrowKey)
+    return res.status(503).json({ error: 'No precipitation API key configured' })
 
   try {
-    const url = `https://api.tomorrow.io/v4/weather/forecast` +
-      `?location=${lat},${lon}&timesteps=1m&fields=precipitationIntensity&units=metric&apikey=${key}`
-
-    const response = await fetch(url)
-    if (!response.ok) {
-      const text = await response.text()
-      return res.status(response.status).json({ error: text })
-    }
-
-    const data = await response.json()
-    const minutely = data?.timelines?.minutely || []
-
-    const frames = minutely.map(m => ({
-      time:      new Date(m.time).getTime(),
-      intensity: intensityLevel(m.values?.precipitationIntensity ?? 0)
-    }))
-
+    const frames = pirateKey
+      ? await fetchPirateWeather(pirateKey, lat, lon)
+      : await fetchTomorrowio(tomorrowKey, lat, lon)
     res.json(frames)
   } catch (e) {
-    res.status(500).json({ error: 'Fetch failed' })
+    res.status(500).json({ error: e.message })
   }
 }
 
