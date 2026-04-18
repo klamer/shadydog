@@ -409,10 +409,17 @@ body {
   cursor: pointer;
   transition: all 0.15s;
 }
-.radar-btn.active, .radar-btn:hover {
+.radar-btn.active {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+}
+@media (hover: hover) {
+  .radar-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
 }
 
 /* ── Settings modal ─────────────────────────────────── */
