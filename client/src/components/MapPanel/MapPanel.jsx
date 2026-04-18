@@ -5,6 +5,8 @@ import { useApp } from '../../AppContext'
 
 const RAINVIEWER_API = 'https://api.rainviewer.com/public/weather-maps.json'
 const NWS_RADAR_URL  = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png'
+const SPC_OUTLOOK_URL = 'https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson'
+
 const CARTO          = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'
 const MAPBOX_ATTR    = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 
@@ -32,11 +34,15 @@ export default function MapPanel() {
   const mapRef        = useRef(null)
   const baseTileRef   = useRef(null)
   const radarTileRef  = useRef(null)
+  const spcLayerRef   = useRef(null)
   const markerRef     = useRef(null)
   const radarTimer    = useRef(null)
 
   const [radarSource, setRadarSource] = useState('rainviewer')
   const [radarPath,   setRadarPath]   = useState(null)
+  const [showSpc,     setShowSpc]     = useState(false)
+
+  const spcOpacityValue = { light: 0.2, med: 0.35, dark: 0.5 }[localStorage.getItem('spcOpacity') || 'med']
   const [mapStyle,    setMapStyle]    = useState(() => localStorage.getItem('mapStyle') || 'carto-voyager')
 
   // Build available styles — Mapbox only shown when key is present
@@ -84,6 +90,7 @@ export default function MapPanel() {
       mapRef.current       = null
       baseTileRef.current  = null
       radarTileRef.current = null
+      spcLayerRef.current  = null
       markerRef.current    = null
     }
   }, []) // eslint-disable-line
@@ -136,6 +143,35 @@ export default function MapPanel() {
     }
   }, [radarSource, radarPath])
 
+  // SPC outlook overlay
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    if (spcLayerRef.current) {
+      map.removeLayer(spcLayerRef.current)
+      spcLayerRef.current = null
+    }
+
+    if (!showSpc) return
+
+    fetch(SPC_OUTLOOK_URL)
+      .then(r => r.json())
+      .then(data => {
+        if (!mapRef.current) return
+        spcLayerRef.current = L.geoJSON(data, {
+          style: feature => ({
+            color:       feature.properties?.stroke || '#888',
+            fillColor:   feature.properties?.fill   || '#888',
+            fillOpacity: spcOpacityValue,
+            weight:      1.5,
+            opacity:     0.9
+          })
+        }).addTo(mapRef.current)
+      })
+      .catch(() => {})
+  }, [showSpc])
+
   // Fetch RainViewer path + auto-refresh every 5 minutes
   useEffect(() => {
     if (radarSource !== 'rainviewer') {
@@ -167,18 +203,17 @@ export default function MapPanel() {
   return (
     <div className="map-panel">
       <div className="radar-controls">
-        <span className="radar-label">Radar:</span>
-        {['off', 'rainviewer', 'nws'].map(src => (
+        {['rainviewer', 'nws'].map(src => (
           <button
             key={src}
             className={`radar-btn ${radarSource === src ? 'active' : ''}`}
-            onClick={() => setRadarSource(src)}
+            onClick={() => setRadarSource(radarSource === src ? 'off' : src)}
           >
-            {src === 'off' ? 'Off' : src === 'rainviewer' ? 'RainViewer' : 'NWS'}
+            {src === 'rainviewer' ? 'RainViewer' : 'NWS'}
           </button>
         ))}
 
-        <span className="radar-label" style={{ marginLeft: 12 }}>Map:</span>
+        <span className="radar-label" style={{ marginLeft: 8 }}>Map:</span>
         {Object.entries(styles).map(([key, s]) => (
           <button
             key={key}
@@ -188,6 +223,14 @@ export default function MapPanel() {
             {s.label}
           </button>
         ))}
+
+        <button
+          className={`radar-btn ${showSpc ? 'active' : ''}`}
+          style={{ marginLeft: 8 }}
+          onClick={() => setShowSpc(v => !v)}
+        >
+          SPC
+        </button>
       </div>
 
       <div className="map-container-wrapper">

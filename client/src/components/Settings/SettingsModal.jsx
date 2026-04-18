@@ -16,7 +16,8 @@ export default function SettingsModal({ onClose }) {
   const [theme,      setTheme]      = useState(settings?.theme      || 'dark')
   const [layout,     setLayout]     = useState(settings?.layout     || 'map-left')
   const [units,      setUnits]      = useState(settings?.units      || 'imperial')
-  const [tabletMode, setTabletMode] = useState(localStorage.getItem('tabletMode') === 'true')
+  const [tabletMode,   setTabletMode]   = useState(localStorage.getItem('tabletMode') === 'true')
+  const [spcOpacity,   setSpcOpacity]   = useState(localStorage.getItem('spcOpacity') || 'med')
   const [port,       setPort]       = useState(settings?.port       || 8080)
   const [mapboxKey,      setMapboxKey]      = useState(settings?.mapboxKey      || '')
   const [tomorrowioKey, setTomorrowioKey] = useState(settings?.tomorrowioKey || '')
@@ -54,6 +55,7 @@ export default function SettingsModal({ onClose }) {
     const currentActiveId = settings?.activeLocationId
     const activeStillExists = locations.some(l => l.id === currentActiveId)
     localStorage.setItem('tabletMode', tabletMode)
+    localStorage.setItem('spcOpacity', spcOpacity)
     const patch = {
       theme,
       layout,
@@ -111,6 +113,22 @@ export default function SettingsModal({ onClose }) {
               />
             </label>
             <p className="settings-note">Splits conditions and charts into two narrow panels. Best for landscape tablets.</p>
+            <label>
+              SPC Overlay
+              <div style={{ display: 'flex', gap: 6 }}>
+                {['light', 'med', 'dark'].map(v => (
+                  <button
+                    key={v}
+                    className={`radar-btn ${spcOpacity === v ? 'active' : ''}`}
+                    onClick={() => setSpcOpacity(v)}
+                    style={{ textTransform: 'capitalize' }}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </label>
+            <p className="settings-note">Opacity of the SPC severe weather outlook overlay on the map.</p>
           </section>
 
           {/* API Keys */}
