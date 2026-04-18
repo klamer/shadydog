@@ -35,6 +35,7 @@ export default function MapPanel() {
   const baseTileRef   = useRef(null)
   const radarTileRef  = useRef(null)
   const spcLayerRef   = useRef(null)
+  const spcTimer      = useRef(null)
   const markerRef     = useRef(null)
   const radarTimer    = useRef(null)
 
@@ -92,6 +93,7 @@ export default function MapPanel() {
       radarTileRef.current = null
       spcLayerRef.current  = null
       markerRef.current    = null
+      clearInterval(spcTimer.current)
     }
   }, []) // eslint-disable-line
 
@@ -143,10 +145,12 @@ export default function MapPanel() {
     }
   }, [radarSource, radarPath])
 
-  // SPC outlook overlay
+  // SPC outlook overlay — fetch on toggle, refresh every 30 minutes
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
+
+    clearInterval(spcTimer.current)
 
     if (spcLayerRef.current) {
       map.removeLayer(spcLayerRef.current)
@@ -155,21 +159,29 @@ export default function MapPanel() {
 
     if (!showSpc) return
 
-    fetch(SPC_OUTLOOK_URL)
-      .then(r => r.json())
-      .then(data => {
-        if (!mapRef.current) return
-        spcLayerRef.current = L.geoJSON(data, {
-          style: feature => ({
-            color:       feature.properties?.stroke || '#888',
-            fillColor:   feature.properties?.fill   || '#888',
-            fillOpacity: spcOpacityValue,
-            weight:      1.5,
-            opacity:     0.9
-          })
-        }).addTo(mapRef.current)
-      })
-      .catch(() => {})
+    function fetchSpc() {
+      fetch(SPC_OUTLOOK_URL)
+        .then(r => r.json())
+        .then(data => {
+          if (!mapRef.current) return
+          if (spcLayerRef.current) mapRef.current.removeLayer(spcLayerRef.current)
+          spcLayerRef.current = L.geoJSON(data, {
+            style: feature => ({
+              color:       feature.properties?.stroke || '#888',
+              fillColor:   feature.properties?.fill   || '#888',
+              fillOpacity: spcOpacityValue,
+              weight:      1.5,
+              opacity:     0.9
+            })
+          }).addTo(mapRef.current)
+        })
+        .catch(() => {})
+    }
+
+    fetchSpc()
+    spcTimer.current = setInterval(fetchSpc, 30 * 60 * 1000)
+
+    return () => clearInterval(spcTimer.current)
   }, [showSpc])
 
   // Fetch RainViewer path + auto-refresh every 5 minutes
