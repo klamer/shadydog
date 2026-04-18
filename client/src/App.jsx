@@ -13,9 +13,9 @@ export default function App() {
   const { settings, updateSettings } = useApp()
   const [showSettings, setShowSettings] = useState(false)
 
-  const theme      = settings?.theme      || 'dark'
-  const layout     = settings?.layout     || 'map-left'
-  const tabletMode = settings?.tabletMode || false
+  const theme      = settings?.theme  || 'dark'
+  const layout     = settings?.layout || 'map-left'
+  const tabletMode = localStorage.getItem('tabletMode') === 'true'
 
   // Apply theme to document root
   useEffect(() => {

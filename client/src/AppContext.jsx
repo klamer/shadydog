@@ -4,8 +4,11 @@ import { fetchWeather } from './services/weather'
 import { fetchAlerts } from './services/alerts'
 import { fetchRainViewerPoint } from './services/rainviewerPoint'
 
-const REFRESH_SHORT = 5 * 60 * 1000   // 5 minutes — current + 24hr
-const REFRESH_LONG  = 6 * 60 * 60 * 1000  // 6 hours — 5-day
+const REFRESH_RADAR   =  5 * 60 * 1000       // 5 minutes  — RainViewer radar
+const REFRESH_CURRENT = 15 * 60 * 1000       // 15 minutes — current conditions
+const REFRESH_HOURLY  = 60 * 60 * 1000       // 1 hour     — 24hr graph
+const REFRESH_ALERTS  = 15 * 60 * 1000       // 15 minutes — NWS alerts
+const REFRESH_DAILY   =  6 * 60 * 60 * 1000  // 6 hours    — 5-day forecast
 
 const AppContext = createContext(null)
 
@@ -17,8 +20,9 @@ export function AppProvider({ children }) {
   const [loadingWeather, setLoadingWeather] = useState(false)
   const [error, setError]         = useState(null)
 
+  const currentRef = useRef(null)
+  const hourlyRef  = useRef(null)
   const dailyRef   = useRef(null)
-  const shortRef   = useRef(null)
   const alertsRef  = useRef(null)
   const rvRef      = useRef(null)
   const rvBlocked  = useRef(false)
@@ -41,17 +45,24 @@ export function AppProvider({ children }) {
       const data = await fetchWeather(location.lat, location.lon, settings?.units)
       setWeather(prev => ({
         ...prev,
-        current:     data.current,
-        hourly:      data.hourly,
-        // Only replace daily if we don't have it yet or on long refresh
-        daily:       currentWeather?.daily || data.daily,
-        dailyFull:   data.daily
+        current:   data.current,
+        hourly:    data.hourly,
+        daily:     currentWeather?.daily || data.daily,
+        dailyFull: data.daily
       }))
     } catch (e) {
       setError('Weather fetch failed')
     } finally {
       setLoadingWeather(false)
     }
+  }, [settings?.units])
+
+  const loadCurrent = useCallback(async (location) => {
+    if (!location) return
+    try {
+      const data = await fetchWeather(location.lat, location.lon, settings?.units, { currentOnly: true })
+      setWeather(prev => ({ ...prev, current: data.current }))
+    } catch { /* silent */ }
   }, [settings?.units])
 
   const loadDaily = useCallback(async (location) => {
@@ -89,18 +100,21 @@ export function AppProvider({ children }) {
     loadRainviewer(activeLocation)
 
     // Clear old timers
-    clearInterval(shortRef.current)
+    clearInterval(currentRef.current)
+    clearInterval(hourlyRef.current)
     clearInterval(dailyRef.current)
     clearInterval(alertsRef.current)
     clearInterval(rvRef.current)
 
-    shortRef.current  = setInterval(() => loadWeather(activeLocation, weather), REFRESH_SHORT)
-    alertsRef.current = setInterval(() => loadAlerts(activeLocation), REFRESH_SHORT)
-    dailyRef.current  = setInterval(() => loadDaily(activeLocation), REFRESH_LONG)
-    rvRef.current     = setInterval(() => loadRainviewer(activeLocation), REFRESH_SHORT)
+    currentRef.current = setInterval(() => loadCurrent(activeLocation), REFRESH_CURRENT)
+    hourlyRef.current  = setInterval(() => loadWeather(activeLocation, weather), REFRESH_HOURLY)
+    alertsRef.current  = setInterval(() => loadAlerts(activeLocation), REFRESH_ALERTS)
+    dailyRef.current   = setInterval(() => loadDaily(activeLocation), REFRESH_DAILY)
+    rvRef.current      = setInterval(() => loadRainviewer(activeLocation), REFRESH_RADAR)
 
     return () => {
-      clearInterval(shortRef.current)
+      clearInterval(currentRef.current)
+      clearInterval(hourlyRef.current)
       clearInterval(dailyRef.current)
       clearInterval(alertsRef.current)
       clearInterval(rvRef.current)

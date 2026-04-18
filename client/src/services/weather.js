@@ -1,6 +1,6 @@
 const BASE = 'https://api.open-meteo.com/v1/forecast'
 
-export async function fetchWeather(lat, lon, units = 'imperial') {
+export async function fetchWeather(lat, lon, units = 'imperial', { currentOnly = false } = {}) {
   const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius'
   const windUnit = units === 'imperial' ? 'mph' : 'kmh'
   const precipUnit = units === 'imperial' ? 'inch' : 'mm'
@@ -20,11 +20,11 @@ export async function fetchWeather(lat, lon, units = 'imperial') {
       'cloud_cover',
       'is_day'
     ].join(','),
-    hourly: [
+    ...(!currentOnly && { hourly: [
       'temperature_2m',
       'precipitation_probability',
       'weather_code'
-    ].join(','),
+    ].join(',') }),
     daily: [
       'temperature_2m_max',
       'temperature_2m_min',
@@ -39,7 +39,7 @@ export async function fetchWeather(lat, lon, units = 'imperial') {
     precipitation_unit: precipUnit,
     timezone: 'auto',
     forecast_days: 6,
-    forecast_hours: 24
+    ...(!currentOnly && { forecast_hours: 24 })
   })
 
   const res = await fetch(`${BASE}?${params}`)

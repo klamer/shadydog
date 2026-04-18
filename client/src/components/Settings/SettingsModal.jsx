@@ -16,7 +16,7 @@ export default function SettingsModal({ onClose }) {
   const [theme,      setTheme]      = useState(settings?.theme      || 'dark')
   const [layout,     setLayout]     = useState(settings?.layout     || 'map-left')
   const [units,      setUnits]      = useState(settings?.units      || 'imperial')
-  const [tabletMode, setTabletMode] = useState(settings?.tabletMode || false)
+  const [tabletMode, setTabletMode] = useState(localStorage.getItem('tabletMode') === 'true')
   const [port,       setPort]       = useState(settings?.port       || 8080)
   const [mapboxKey,  setMapboxKey]  = useState(settings?.mapboxKey  || '')
   const [locations, setLocations] = useState(settings?.locations || [])
@@ -52,11 +52,11 @@ export default function SettingsModal({ onClose }) {
     setSaving(true)
     const currentActiveId = settings?.activeLocationId
     const activeStillExists = locations.some(l => l.id === currentActiveId)
+    localStorage.setItem('tabletMode', tabletMode)
     const patch = {
       theme,
       layout,
       units,
-      tabletMode,
       port: parseInt(port, 10) || 8080,
       mapboxKey: mapboxKey.trim(),
       locations,
