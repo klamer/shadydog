@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { getSettings, saveSettings } from './services/api'
 import { fetchWeather } from './services/weather'
 import { fetchAlerts } from './services/alerts'
-import { fetchRainViewerPoint } from './services/rainviewerPoint'
+import { fetchPrecip } from './services/precip'
 
 const REFRESH_RADAR   =  5 * 60 * 1000       // 5 minutes  — RainViewer radar
 const REFRESH_CURRENT = 15 * 60 * 1000       // 15 minutes — current conditions
@@ -16,7 +16,7 @@ export function AppProvider({ children }) {
   const [settings, setSettings]   = useState(null)
   const [weather, setWeather]     = useState(null)
   const [alerts, setAlerts]       = useState([])
-  const [rainviewer, setRainviewer] = useState(null)
+  const [precip, setPrecip] = useState(null)
   const [loadingWeather, setLoadingWeather] = useState(false)
   const [error, setError]         = useState(null)
 
@@ -25,7 +25,6 @@ export function AppProvider({ children }) {
   const dailyRef   = useRef(null)
   const alertsRef  = useRef(null)
   const rvRef      = useRef(null)
-  const rvBlocked  = useRef(false)
 
   // Active location derived from settings
   const activeLocation = settings?.locations?.find(l => l.id === settings.activeLocationId)
@@ -79,15 +78,10 @@ export function AppProvider({ children }) {
     setAlerts(data)
   }, [])
 
-  const loadRainviewer = useCallback(async (location) => {
-    if (!location || rvBlocked.current) return
-    const data = await fetchRainViewerPoint(location.lat, location.lon)
-    if (data === null) {
-      rvBlocked.current = true
-      setRainviewer([])   // empty = CORS blocked, components fall back to hourly
-    } else {
-      setRainviewer(data)
-    }
+  const loadPrecip = useCallback(async (location) => {
+    if (!location) return
+    const data = await fetchPrecip(location.lat, location.lon)
+    setPrecip(data ?? [])  // null on failure → empty array → components fall back to hourly
   }, [])
 
   // Kick off fetches when active location is known
@@ -97,7 +91,7 @@ export function AppProvider({ children }) {
     loadWeather(activeLocation, null)
     loadAlerts(activeLocation)
     loadDaily(activeLocation)
-    loadRainviewer(activeLocation)
+    loadPrecip(activeLocation)
 
     // Clear old timers
     clearInterval(currentRef.current)
@@ -110,7 +104,7 @@ export function AppProvider({ children }) {
     hourlyRef.current  = setInterval(() => loadWeather(activeLocation, weather), REFRESH_HOURLY)
     alertsRef.current  = setInterval(() => loadAlerts(activeLocation), REFRESH_ALERTS)
     dailyRef.current   = setInterval(() => loadDaily(activeLocation), REFRESH_DAILY)
-    rvRef.current      = setInterval(() => loadRainviewer(activeLocation), REFRESH_RADAR)
+    rvRef.current      = setInterval(() => loadPrecip(activeLocation), REFRESH_RADAR)
 
     return () => {
       clearInterval(currentRef.current)
@@ -133,7 +127,7 @@ export function AppProvider({ children }) {
       activeLocation,
       weather,
       alerts,
-      rainviewer,
+      precip,
       loadingWeather,
       error,
       updateSettings

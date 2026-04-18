@@ -71,11 +71,11 @@ function summaryFromHourly(hourly) {
 }
 
 export default function HyperLocal() {
-  const { weather, rainviewer } = useApp()
+  const { weather, precip } = useApp()
 
-  // rainviewer null = still loading, [] = CORS blocked (use fallback)
-  const summary = rainviewer?.length
-    ? summaryFromRadar(rainviewer)
+  // precip null = still loading, [] = fetch failed (use fallback)
+  const summary = precip?.length
+    ? summaryFromRadar(precip)
     : summaryFromHourly(weather?.hourly)
 
   if (!summary) return null

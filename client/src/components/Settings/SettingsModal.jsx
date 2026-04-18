@@ -18,7 +18,8 @@ export default function SettingsModal({ onClose }) {
   const [units,      setUnits]      = useState(settings?.units      || 'imperial')
   const [tabletMode, setTabletMode] = useState(localStorage.getItem('tabletMode') === 'true')
   const [port,       setPort]       = useState(settings?.port       || 8080)
-  const [mapboxKey,  setMapboxKey]  = useState(settings?.mapboxKey  || '')
+  const [mapboxKey,      setMapboxKey]      = useState(settings?.mapboxKey      || '')
+  const [tomorrowioKey, setTomorrowioKey] = useState(settings?.tomorrowioKey || '')
   const [locations, setLocations] = useState(settings?.locations || [])
 
   const [newLat,    setNewLat]    = useState('')
@@ -58,7 +59,8 @@ export default function SettingsModal({ onClose }) {
       layout,
       units,
       port: parseInt(port, 10) || 8080,
-      mapboxKey: mapboxKey.trim(),
+      mapboxKey:      mapboxKey.trim(),
+      tomorrowioKey: tomorrowioKey.trim(),
       locations,
       activeLocationId: activeStillExists ? currentActiveId : (locations[0]?.id || null)
     }
@@ -124,6 +126,16 @@ export default function SettingsModal({ onClose }) {
               />
             </label>
             <p className="settings-note">Optional. Enables Mapbox Dark map style. Get a free key at mapbox.com.</p>
+            <label>
+              Tomorrow.io
+              <input
+                type="password"
+                placeholder="API key"
+                value={tomorrowioKey}
+                onChange={e => setTomorrowioKey(e.target.value)}
+              />
+            </label>
+            <p className="settings-note">Required for hyperlocal minutely precipitation. Get a free key at tomorrow.io.</p>
           </section>
 
           {/* Server */}

@@ -1,18 +1,18 @@
 
 # Shadydog Weather Station
 
-A Raspberry Pi (and general-purpose) weather display app. React + Vite frontend, Express backend. No paid APIs — all data is free and keyless.
+A Raspberry Pi (and general-purpose) weather display app. React + Vite frontend, Express backend. Works out of the box with no API keys — optional keys unlock enhanced features.
 
 ## Requirements
 
-- **Node.js 18 or higher**
+- **Node.js 20 or higher**
 
 Using [nvm](https://github.com/nvm-sh/nvm):
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 source ~/.bashrc   # or restart your shell
-nvm install 18
-nvm use 18
+nvm install 20
+nvm use 20
 ```
 
 ## Quick Start
@@ -70,16 +70,29 @@ Check status: `sudo systemctl status shadydog`
 
 Edit `/etc/systemd/system/shadydog.service` to change the port or run as a different user.
 
+## Optional API Keys
+
+All features work without any API keys. The following keys unlock enhanced functionality and can be added via the ⚙️ Settings modal.
+
+| Service | Enhances | Free tier | Where to get |
+|---|---|---|---|
+| [Tomorrow.io](https://tomorrow.io) | Hyperlocal minutely precipitation (HyperLocal summary + 2-hour chart) | 500 calls/day | tomorrow.io |
+| [Mapbox](https://mapbox.com) | Mapbox Dark map style | 50,000 loads/month | mapbox.com |
+
+Keys are stored in `settings.json` on the server and never exposed to the browser.
+
 ## Data Sources
 
 | Source | Used for | Key required |
 |---|---|---|
-| [Open-Meteo](https://open-meteo.com) | Weather data | No |
+| [Open-Meteo](https://open-meteo.com) | Current conditions, hourly & 5-day forecast | No |
+| [Tomorrow.io](https://tomorrow.io) | Minutely precipitation (hyperlocal) | Optional |
 | [OpenStreetMap](https://www.openstreetmap.org) | Base map tiles | No |
 | [RainViewer](https://www.rainviewer.com/api.html) | Radar overlay | No |
 | [Iowa State Mesonet](https://mesonet.agron.iastate.edu) | NWS NEXRAD radar | No |
 | [NWS Alerts API](https://www.weather.gov/documentation/services-web-api) | Severe weather alerts (US only) | No |
 | [Nominatim](https://nominatim.openstreetmap.org) | Reverse geocoding | No |
+| [Mapbox](https://mapbox.com) | Dark map style | Optional |
 
 ## Settings
 
@@ -96,7 +109,8 @@ Settings are stored in `settings.json` at the project root (or the path set via 
 
 | Data | Interval |
 |---|---|
-| Current conditions | 5 minutes |
-| 24-hour forecast | 5 minutes |
+| Radar / minutely precipitation | 5 minutes |
+| Current conditions | 15 minutes |
+| Severe weather alerts | 15 minutes |
+| 24-hour forecast | 1 hour |
 | 5-day forecast | 6 hours |
-| Severe weather alerts | 5 minutes |

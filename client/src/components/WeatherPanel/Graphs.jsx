@@ -47,7 +47,7 @@ function fmtMs(ms) {
 }
 
 export default function Graphs({ fillHeight = false }) {
-  const { weather, settings, rainviewer } = useApp()
+  const { weather, settings, precip } = useApp()
   const chartH   = fillHeight ? '100%' : 160
   const smallH   = fillHeight ? '100%' : 100
   const axisW    = fillHeight ? 32 : 45
@@ -69,9 +69,9 @@ export default function Graphs({ fillHeight = false }) {
   const twoHourData = React.useMemo(() => {
     const now = Date.now()
 
-    // Primary: RainViewer radar point data
-    if (rainviewer?.length) {
-      return [...rainviewer]
+    // Primary: Tomorrow.io minutely data
+    if (precip?.length) {
+      return [...precip]
         .sort((a, b) => a.time - b.time)
         .filter(f => f.time >= now - 10 * 60 * 1000)  // include current frame
         .map(f => ({
@@ -102,7 +102,7 @@ export default function Graphs({ fillHeight = false }) {
         const level = probToLevel(d.prob)
         return { time: fmt12(new Date(d.ts).toISOString()), level, label: PRECIP_LABELS[level], color: PRECIP_COLORS[level], ts: d.ts }
       })
-  }, [rainviewer, weather?.hourly])
+  }, [precip, weather?.hourly])
 
   const dailyData = React.useMemo(() => {
     const d = weather?.daily

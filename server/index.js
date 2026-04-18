@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const settingsCtrl = require('./settingsCtrl')
 const geocodeCtrl = require('./geocodeCtrl')
+const precipCtrl  = require('./precipCtrl')
 
 const app = express()
 const PORT = process.env.PORT || settingsCtrl.getPort()
@@ -23,6 +24,9 @@ app.put('/api/settings', (req, res) => {
 
 // Reverse geocoding proxy (Nominatim requires server-side to set User-Agent)
 app.get('/api/geocode/reverse', geocodeCtrl.reverse)
+
+// Tomorrow.io precipitation proxy (keeps API key server-side)
+app.get('/api/precip', precipCtrl.precip)
 
 // Serve built client in production
 if (process.env.NODE_ENV === 'production') {
