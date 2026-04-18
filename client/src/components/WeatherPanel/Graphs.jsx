@@ -50,7 +50,7 @@ export default function Graphs({ fillHeight = false }) {
   const { weather, settings, precip } = useApp()
   const chartH   = fillHeight ? '100%' : 160
   const smallH   = fillHeight ? '100%' : 100
-  const axisW    = fillHeight ? 32 : 45
+  const axisW    = fillHeight ? 42 : 45
   const marginR  = fillHeight ? 4 : 40
   const tempLabel = settings?.units === 'imperial' ? 'F' : 'C'
   const gridColor = 'var(--border)'

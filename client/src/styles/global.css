@@ -358,7 +358,7 @@ body {
 
 .tablet-mode .weather-panel {
   gap: 8px;
-  padding: 8px;
+  padding: 8px 0 8px 8px;
 }
 
 .tablet-mode .condition-grid-2 {

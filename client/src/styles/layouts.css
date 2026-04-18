@@ -25,7 +25,7 @@
 /* ── tablet-mode override: map | conditions | charts ── */
 .tablet-mode.layout-map-left .app-main,
 .tablet-mode.layout-weather-left .app-main {
-  grid-template-columns: 1fr 220px 220px;
+  grid-template-columns: 1fr 220px 250px;
   grid-template-rows: 1fr;
   gap: 0;
 }
