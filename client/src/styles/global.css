@@ -199,6 +199,7 @@ body {
   border: 1px solid var(--border);
   overflow: hidden;
   background: var(--surface);
+  flex-shrink: 0;
 }
 
 .alerts-clear {
@@ -218,7 +219,9 @@ body {
   cursor: pointer;
   user-select: none;
 }
-.alerts-header:hover { background: var(--surface-alt); }
+@media (hover: hover) {
+  .alerts-header:hover { background: var(--surface-alt); }
+}
 
 .alert-dot {
   width: 10px; height: 10px;
@@ -364,6 +367,14 @@ body {
 .tablet-mode .condition-grid-2 {
   grid-template-columns: 1fr;
 }
+
+.tablet-mode .clock-time   { font-size: 32px; margin-bottom: 4px; }
+.tablet-mode .clock-date   { margin-bottom: 0; }
+.tablet-mode .weather-icon { font-size: 36px; }
+.tablet-mode .temp-value   { font-size: 40px; }
+.tablet-mode .condition-desc { margin-bottom: 6px; }
+.tablet-mode .sun-row      { margin-bottom: 4px; }
+.tablet-mode .cond-row     { padding: 4px 8px; }
 
 .tablet-mode .radar-controls {
   flex-wrap: wrap;

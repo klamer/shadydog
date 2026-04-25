@@ -19,7 +19,7 @@ export default function AlertsBanner() {
 
   return (
     <div className="alerts-banner" style={{ borderColor: color }}>
-      <div className="alerts-header" onClick={() => setExpanded(expanded ? null : 0)}>
+      <div className="alerts-header" onClick={() => setExpanded(expanded !== null ? null : 0)}>
         <span className="alert-dot" style={{ background: color }} />
         <span className="alert-count">
           {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}
