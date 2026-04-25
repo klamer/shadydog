@@ -5,7 +5,15 @@ import { useApp } from '../../AppContext'
 
 const RAINVIEWER_API = 'https://api.rainviewer.com/public/weather-maps.json'
 const NWS_RADAR_URL  = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png'
-const SPC_OUTLOOK_URL = 'https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson'
+const SPC_OUTLOOK_URL   = 'https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson'
+const NWS_ALERTS_URL    = 'https://api.weather.gov/alerts/active?status=actual&message_type=alert'
+
+const ALERT_SEVERITY_COLORS = {
+  Extreme:  '#cc0000',
+  Severe:   '#ff6600',
+  Moderate: '#ffaa00',
+  Minor:    '#ffdd00',
+}
 
 const CARTO          = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'
 const MAPBOX_ATTR    = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -13,7 +21,6 @@ const MAPBOX_ATTR    = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</
 const BASE_STYLES = {
   osm:            { label: 'Std',     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',                       subdomains: 'abc',  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' },
   'carto-dark':   { label: 'Dark',    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',            subdomains: 'abcd', attribution: CARTO },
-  'carto-light':  { label: 'Light',   url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',           subdomains: 'abcd', attribution: CARTO },
   'carto-voyager':{ label: 'Voyager', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', subdomains: 'abcd', attribution: CARTO },
 }
 
@@ -34,14 +41,17 @@ export default function MapPanel() {
   const mapRef        = useRef(null)
   const baseTileRef   = useRef(null)
   const radarTileRef  = useRef(null)
-  const spcLayerRef   = useRef(null)
-  const spcTimer      = useRef(null)
-  const markerRef     = useRef(null)
-  const radarTimer    = useRef(null)
+  const spcLayerRef     = useRef(null)
+  const spcTimer        = useRef(null)
+  const alertLayerRef   = useRef(null)
+  const alertTimer      = useRef(null)
+  const markerRef       = useRef(null)
+  const radarTimer      = useRef(null)
 
   const [radarSource, setRadarSource] = useState('rainviewer')
   const [radarPath,   setRadarPath]   = useState(null)
   const [showSpc,     setShowSpc]     = useState(false)
+  const [showAlerts,  setShowAlerts]  = useState(false)
 
   const spcOpacityValue = { light: 0.2, med: 0.35, dark: 0.5 }[localStorage.getItem('spcOpacity') || 'med']
   const [mapStyle,    setMapStyle]    = useState(() => localStorage.getItem('mapStyle') || 'carto-voyager')
@@ -91,9 +101,11 @@ export default function MapPanel() {
       mapRef.current       = null
       baseTileRef.current  = null
       radarTileRef.current = null
-      spcLayerRef.current  = null
-      markerRef.current    = null
+      spcLayerRef.current   = null
+      alertLayerRef.current = null
+      markerRef.current     = null
       clearInterval(spcTimer.current)
+      clearInterval(alertTimer.current)
     }
   }, []) // eslint-disable-line
 
@@ -184,6 +196,70 @@ export default function MapPanel() {
     return () => clearInterval(spcTimer.current)
   }, [showSpc])
 
+  // NWS active alerts overlay — refresh every 5 minutes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    clearInterval(alertTimer.current)
+
+    if (alertLayerRef.current) {
+      map.removeLayer(alertLayerRef.current)
+      alertLayerRef.current = null
+    }
+
+    if (!showAlerts) return
+
+    async function fetchAlerts() {
+      try {
+        const res  = await fetch(NWS_ALERTS_URL)
+        const data = await res.json()
+        if (!mapRef.current) return
+
+        const features    = data.features || []
+        const withGeom    = features.filter(f => f.geometry)
+        const withoutGeom = features.filter(f => !f.geometry && f.properties?.affectedZones?.length)
+
+        // Collect unique zone URLs and fetch geometries in parallel
+        const zoneUrls = [...new Set(withoutGeom.flatMap(f => f.properties.affectedZones || []))]
+        const zoneResults = await Promise.all(
+          zoneUrls.map(url => fetch(url).then(r => r.json()).catch(() => null))
+        )
+        const zoneGeomMap = {}
+        zoneUrls.forEach((url, i) => {
+          if (zoneResults[i]?.geometry) zoneGeomMap[url] = zoneResults[i].geometry
+        })
+
+        // Build unified feature list
+        const allFeatures = [
+          ...withGeom,
+          ...withoutGeom.flatMap(alert =>
+            (alert.properties?.affectedZones || [])
+              .filter(url => zoneGeomMap[url])
+              .map(url => ({
+                type: 'Feature',
+                geometry: zoneGeomMap[url],
+                properties: { severity: alert.properties?.severity }
+              }))
+          )
+        ]
+
+        if (alertLayerRef.current) mapRef.current.removeLayer(alertLayerRef.current)
+        alertLayerRef.current = L.geoJSON({ type: 'FeatureCollection', features: allFeatures }, {
+          style: feature => {
+            const color = ALERT_SEVERITY_COLORS[feature.properties?.severity] || '#ffdd00'
+            return { color, fillColor: color, fillOpacity: 0.25, weight: 2, opacity: 0.9 }
+          }
+        }).addTo(mapRef.current)
+      } catch { /* silent */ }
+    }
+
+    fetchAlerts()
+    alertTimer.current = setInterval(fetchAlerts, 5 * 60 * 1000)
+
+    return () => clearInterval(alertTimer.current)
+  }, [showAlerts])
+
   // Fetch RainViewer path + auto-refresh every 5 minutes
   useEffect(() => {
     if (radarSource !== 'rainviewer') {
@@ -242,6 +318,12 @@ export default function MapPanel() {
           onClick={() => setShowSpc(v => !v)}
         >
           SPC
+        </button>
+        <button
+          className={`radar-btn ${showAlerts ? 'active' : ''}`}
+          onClick={() => setShowAlerts(v => !v)}
+        >
+          Alert
         </button>
       </div>
 
