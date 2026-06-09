@@ -8,6 +8,13 @@ const NWS_RADAR_URL  = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/ne
 const SPC_OUTLOOK_URL   = 'https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson'
 const NWS_ALERTS_URL    = 'https://api.weather.gov/alerts/active?status=actual&message_type=alert'
 
+// Event types shown in the alert banner but not drawn as map polygons
+const MAP_EXCLUDED_EVENTS = new Set([
+  'Air Quality Alert',
+  'Air Stagnation Advisory',
+  'Dense Smoke Advisory',
+])
+
 const ALERT_SEVERITY_COLORS = {
   Extreme:  '#cc0000',
   Severe:   '#ff6600',
@@ -216,7 +223,7 @@ export default function MapPanel() {
         const data = await res.json()
         if (!mapRef.current) return
 
-        const features    = data.features || []
+        const features    = (data.features || []).filter(f => !MAP_EXCLUDED_EVENTS.has(f.properties?.event))
         const withGeom    = features.filter(f => f.geometry)
         const withoutGeom = features.filter(f => !f.geometry && f.properties?.affectedZones?.length)
 
